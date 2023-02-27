@@ -1,0 +1,22 @@
+
+					: take MI if double current position
+					: is outside of bounds of space/time
+					: limits
+Je 1 $time_index out-of-bounds		: first line must be checked to tell
+					: periodic from fixpoint behavior
+Jg * 2 $space_index $space_limit out-of-bounds
+Jl * 2 $space_index - 0 $space_limit out-of-bounds
+Jg * 2 $time_index $time_limit out-of-bounds
+					: inside limits, will be tested when
+					: highest multiple is out of limits
+$mi = 0.5				: set to NaN
+Je 0 0 not-greater			: exit
+
+:out-of-bounds
+$mi = MMs 0 $mi_index 1
+Jg $max_mi $mi not-greater
+$max_mi = $mi				: found a higher MI
+$max_space = $space_index
+$max_time = $time_index
+:not-greater
+

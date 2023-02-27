@@ -1,0 +1,105 @@
+: file: 2235-7-30.ca
+
+V1
+$runs_per_rule = 3			: sample points per rule
+$max_rules = 500			: number of rules to try
+$max_variations = 5			: number of variations on each rule
+$world_size = 167			: prime
+$print_cnt = 0
+$print_freq = 50
+$loop_length = 24
+Cw $world_size				: set world size
+Ct $loop_length				: iterations of CA
+
+$time_limit = 10
+$space_limit = 38
+
+$debug = 0
+
+Cs 2					: number of states
+Cn 1					: neighborhood size
+Ri 1234
+
+
+: defines
+$NULL = 0				: NULL
+$FXPT = 1				: FIXED POINT
+$PRDC = 2				: PERIODIC
+$KAOS = 3				: CHAOTIC
+$IVPR = 4				: CLASS IV evolving to PERIODIC
+$IVCH = 5				: CLASS IV evolving to CHAOTIC
+
+$NULL_CUTOFF = 0
+$KAOS_CUTOFF = 0
+$IVCH_CUTOFF = 0.3
+$IVPR_CUTOFF = 0.4
+$FXPT_CUTOFF = 0.9
+$PRDC_CUTOFF = 0.9
+$PR_LOOP_CUTOFF = 5
+$CH_LOOP_CUTOFF = 9
+
+$NULL_NULL = $NULL_FXPT = $NULL_PRDC = $NULL_KAOS = $NULL_IVPR = $NULL_IVCH = 0
+$FXPT_NULL = $FXPT_FXPT = $FXPT_PRDC = $FXPT_KAOS = $FXPT_IVPR = $FXPT_IVCH = 0
+$PRDC_NULL = $PRDC_FXPT = $PRDC_PRDC = $PRDC_KAOS = $PRDC_IVPR = $PRDC_IVCH = 0
+$KAOS_NULL = $KAOS_FXPT = $KAOS_PRDC = $KAOS_KAOS = $KAOS_IVPR = $KAOS_IVCH = 0
+$IVPR_NULL = $IVPR_FXPT = $IVPR_PRDC = $IVPR_KAOS = $IVPR_IVPR = $IVPR_IVCH = 0
+$IVCH_NULL = $IVCH_FXPT = $IVCH_PRDC = $IVCH_KAOS = $IVCH_IVPR = $IVCH_IVCH = 0
+
+$NULL_CNT = $KAOS_CNT = $IVCH_CNT = $IVPR_CNT = $FXPT_CNT = $PRDC_CNT = 0
+
+
+V0
+
+$rule_length = Sl Er ""
+$rule_cnt = 0
+:next-rule
+
+Cl Rn 					: set lambda to random # >0 and <1
+
+V $debug
+$rule_string = Rr			: construct rule according to lambda
+V0
+
+o "2235-7-30.il.ca"			: iterate ca and determine MI measure
+o "classify3.ca"				: set $class variable
+
+$root_rule = $class
+
+$variation_cnt = 0
+:next-variation
+
+$rule_index = * $rule_length Rn		: pick a point in rule table
+
+: //////////////////// test out each neighbor /////////////////
+V $debug
+Er $rule_string				: set to root rule
+Er Si $rule_index $rule_string "r"	: pick a random different state for
+					: this rule table entry
+V0
+
+V1 %****** run number = $rule_cnt, variation number = $variation_cnt ******
+V0
+o "2235-7-30.il.ca"
+o "classify3.ca"
+o "count-class.ca"
+
+$variation_cnt = + 1 $variation_cnt
+Jn $variation_cnt $max_variations next-variation
+
+$rule_cnt = + 1 $rule_cnt
+
+$print_cnt = + 1 $print_cnt
+Jn $print_cnt $print_freq skip-print
+V1 o "print-it.ca" $print_cnt = 0 V0
+
+:skip-print
+Jn $rule_cnt $max_rules next-rule
+
+
+V1
+o "print-it.ca"
+
+q					: quit
+
+
+

@@ -1,0 +1,213 @@
+
+$world_size = Cw 0
+
+$runs = 0
+$avg_ageing = 4
+$avg_loops = 0
+$last10 = $last9 = $last8 = $last7 = $last6 = 0
+$last5 = $last4 = $last3 = $last2 = $last1 = 0
+
+:next-run				: do the following for $runs_per_rule
+Ct * 2 $loop_length			: throw away initial transients
+Rw					: random world
+Xc					: measure first loop
+Ct $loop_length
+Xc
+
+:Dw
+
+
+$avg_ent = $ent = MEt 0 6
+$loops = 0
+
+: ////////// stay in this loop until temp MI stabilizes /////////////
+:next-loop				: perform until temporal MI stable
+Xc					: perform iterations of CA
+
+$last10 = $last9			: save last few MIs in queue
+$last9 = $last8
+$last8 = $last7
+$last7 = $last6
+$last6 = $last5
+$last5 = $last4				: save last few MIs in queue
+$last4 = $last3
+$last3 = $last2
+$last2 = $last1
+$last1 = $ent
+
+$avg_ent = / (+ (* $avg_ageing $avg_ent) $ent) (+ $avg_ageing 1)
+
+$ent = MEt 0 6
+$loops = + $loops 1
+:w
+
+
+V 0
+%loops = $loops, average entropy = $avg_ent, entropy = $ent
+V0
+Je $ent 0 stable
+
+Je $last1 $ent stable			: look for identical temporal MIs
+Je $last2 $ent stable
+Je $last3 $ent stable
+Je $last4 $ent stable
+Je $last5 $ent stable
+Je $last6 $ent stable
+Je $last7 $ent stable
+Je $last8 $ent stable
+Je $last9 $ent stable
+Je $last10 $ent stable
+
+Jg - $avg_ent $ent 0 next-loop		: loop until entropy stops dropping
+
+: //////////////// end of stabilizing loop ///////////////////////////////
+:stable					: temporal MI has stopped increasing
+:Dw
+
+
+					: scan MI to +/- $space_limit 
+					: + $time_limit looking for max MI
+$max_mi = 0
+$max_ent = MEs 0 1
+
+: //////////// check time_index = 1 for fixpoint //////////////////
+$time_index = 1
+
+: ////////// check left side ///////////////
+$space_index = - 0 Cn 0			: fixpoint can only be w/in neighborhood
+:next-time2
+$mi_index = + (* (+ 1 $time_index) $world_size) $space_index
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+
+$space_index = + 1 $space_index
+Jn $space_index 0 next-time2
+
+: /////// check right side of column for periodicity ////////////
+:next-time3
+$mi_index = + (* $time_index $world_size) $space_index
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+
+$space_index = + 1 $space_index
+Jl $space_index Cn 0 next-time3
+Je $space_index Cn 0 next-time3
+
+
+
+: ///////////// check vertical and diagonals first since they are ///////
+: //////////////    most common form of repeat pattern       //////
+$time_index = 1
+:next-time1
+
+: ////// check left diagonal for periodicity //////
+$space_index = - 0 $time_index
+$mi_index = + (* (+ 1 $time_index) $world_size) $space_index
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+
+
+: /////// check vertical column for periodicity /////
+$space_index = 0
+$mi_index = + (* $time_index $world_size) $space_index
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+
+: ////// check right diagonal for periodicity //////
+$space_index = $time_index
+$mi_index = + (* $time_index $world_size) $space_index
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+
+$time_index = + 1 $time_index		: do next line
+Jl $time_index $time_limit next-time1
+Je $time_index $time_limit next-time1
+
+
+: ///// not periodic along vertical or diagonal, check everywhere else ////
+$time_index = 1
+:next-time
+$space_index = - 0 $space_limit		: start at -$space_limit
+
+: //////// look at line $time_index to left of current point /////
+:left-space
+Je $space_index - 0 $time_index already-checked1
+$mi_index = + (* (+ 1 $time_index) $world_size) $space_index
+
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+ 
+:already-checked1
+$space_index = + 1 $space_index
+Jn $space_index 0 left-space
+
+$space_index = + 1 $space_index
+: //////// look at line $time_index to right of current point /////
+:right-space
+Je $space_index $time_index already-checked2
+$mi_index = + (* $time_index $world_size) $space_index
+
+o "test-mi2.ca"
+Je $mi 0 bag-this			: stop looking if MI is 0
+Je $mi $max_ent bag-this		: stop looking if MI = same as entropy
+ 
+:already-checked2
+
+$space_index = + 1 $space_index
+Jl $space_index $space_limit right-space
+Je $space_index $space_limit right-space
+
+					: go to next line
+$time_index = + 1 $time_index
+Jl $time_index $time_limit next-time
+Je $time_index $time_limit next-time
+
+:bag-this				: finished, either MI = 0 or max
+
+Je $max_ent 0 skip-it			: don't divide by 0
+$normalized = / $max_mi $max_ent	: normalize MI to entropy
+Je 0 0 skipped
+
+:skip-it
+$normalized = 0				: 0 entropy case
+
+:skipped
+
+Je $normalized 1 no-more-runs		: exit when MI is 1
+Je $normalized 0 no-more-runs		: exit when MI is 0
+					: o/w keep running average
+$avg_norm = + (* $avg_norm $runs) $normalized
+$avg_time = + (* $avg_time $runs) $max_time
+$avg_loops = + (* $avg_loops $runs) $loops
+
+$runs = + $runs 1
+
+$avg_norm = / $avg_norm $runs		: keep average
+$avg_time = / $avg_time $runs		: keep average
+$avg_loops = / $avg_loops $runs		: keep average
+Je 0 0 past-nmr
+
+:no-more-runs
+$avg_loops = / (+ (* $avg_loops $runs) $loops) (+ 1 $runs)
+$avg_time = $max_time
+$avg_norm = $normalized
+$max_time = $time_index
+$max_space = $space_index
+$max_mi = $normalized
+$runs = $runs_per_rule			: to exit
+:past-nmr
+
+Jn $runs $runs_per_rule next-run
+
+
+V0
+%max_mi = $max_mi, max_time = $max_time, max_space = $max_space
+V1
+o "classify3.ca"
+V0

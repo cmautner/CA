@@ -1,0 +1,43 @@
+
+: //////////////// classify rule ///////////////////////////////////
+
+Jl $avg_norm $PRDC_CUTOFF not-PRDC
+Jg $avg_time 1 not-FXPT
+Jg $avg_loops $PR_LOOP_CUTOFF IVPR
+$class = $FXPT
+%FIXPOINT
+Je 0 0 end-classify
+
+:not-FXPT
+Jg $avg_loops $PR_LOOP_CUTOFF IVPR
+$class = $PRDC
+%PERIODIC
+Je 0 0 end-classify
+
+:not-PRDC
+Jl $avg_norm $IVPR_CUTOFF not-IVPR
+:IVPR
+$class =  $IVPR
+%CLASS IV - PERIODIC
+Je 0 0 end-classify
+
+:not-IVPR
+Jl $avg_norm $IVCH_CUTOFF not-IVCH
+:IVCH
+$class = $IVCH
+%CLASS IV - CHAOTIC
+Je 0 0 end-classify
+
+:not-IVCH
+Je $avg_norm $NULL_CUTOFF not-KAOS
+Jg $avg_loops $CH_LOOP_CUTOFF IVCH
+$class = $KAOS
+%CHAOS
+Je 0 0 end-classify
+
+:not-KAOS
+$class = $NULL
+%NULL
+
+:end-classify
+

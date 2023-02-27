@@ -1,0 +1,161 @@
+Jn $root_rule $NULL root-not-NULL
+					: root is NULL
+$NULL_CNT = + $NULL_CNT 1
+Jn $class $NULL class-not-NULL1
+$NULL_NULL = + $NULL_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL1
+Jn $class $FXPT class-not-FXPT1
+$NULL_FXPT = + $NULL_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT1
+Jn $class $PRDC class-not-PRDC1
+$NULL_PRDC = + $NULL_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC1
+Jn $class $KAOS class-not-KAOS1
+$NULL_KAOS = + $NULL_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS1
+Jn $class $IVPR class-not-IVPR1
+$NULL_IVPR = + $NULL_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR1
+$NULL_IVCH = + $NULL_IVCH 1		: class is IVCH
+Je 0 0 exit
+
+:root-not-NULL
+Jn $root_rule $FXPT root-not-FXPT
+					: root is FXPT
+$FXPT_CNT = + $FXPT_CNT 1
+Jn $class $NULL class-not-NULL2
+$FXPT_NULL = + $FXPT_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL2
+Jn $class $FXPT class-not-FXPT2
+$FXPT_FXPT = + $FXPT_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT2
+Jn $class $PRDC class-not-PRDC2
+$FXPT_PRDC = + $FXPT_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC2
+Jn $class $KAOS class-not-KAOS2
+$FXPT_KAOS = + $FXPT_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS2
+Jn $class $IVPR class-not-IVPR2
+$FXPT_IVPR = + $FXPT_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR2
+$FXPT_IVCH = + $FXPT_IVCH 1		: class is IVCH
+Je 0 0 exit
+
+:root-not-FXPT
+Jn $root_rule $PRDC root-not-PRDC
+					: root is PRDC
+$PRDC_CNT = + $PRDC_CNT 1
+Jn $class $NULL class-not-NULL3
+$PRDC_NULL = + $PRDC_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL3
+Jn $class $FXPT class-not-FXPT3
+$PRDC_FXPT = + $PRDC_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT3
+Jn $class $PRDC class-not-PRDC3
+$PRDC_PRDC = + $PRDC_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC3
+Jn $class $KAOS class-not-KAOS3
+$PRDC_KAOS = + $PRDC_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS3
+Jn $class $IVPR class-not-IVPR3
+$PRDC_IVPR = + $PRDC_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR3
+$PRDC_IVCH = + $PRDC_IVCH 1		: class is IVCH
+Je 0 0 exit
+
+:root-not-PRDC
+Jn $root_rule $KAOS root-not-KAOS
+					: root is KAOS
+$KAOS_CNT = + $KAOS_CNT 1
+Jn $class $NULL class-not-NULL4
+$KAOS_NULL = + $KAOS_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL4
+Jn $class $FXPT class-not-FXPT4
+$KAOS_FXPT = + $KAOS_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT4
+Jn $class $PRDC class-not-PRDC4
+$KAOS_PRDC = + $KAOS_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC4
+Jn $class $KAOS class-not-KAOS4
+$KAOS_KAOS = + $KAOS_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS4
+Jn $class $IVPR class-not-IVPR4
+$KAOS_IVPR = + $KAOS_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR4
+$KAOS_IVCH = + $KAOS_IVCH 1		: class is IVCH
+Je 0 0 exit
+
+:root-not-KAOS
+Jn $root_rule $IVPR root-not-IVPR
+					: root is IVPR
+$IVPR_CNT = + $IVPR_CNT 1
+Jn $class $NULL class-not-NULL5
+$IVPR_NULL = + $IVPR_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL5
+Jn $class $FXPT class-not-FXPT5
+$IVPR_FXPT = + $IVPR_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT5
+Jn $class $PRDC class-not-PRDC5
+$IVPR_PRDC = + $IVPR_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC5
+Jn $class $KAOS class-not-KAOS5
+$IVPR_KAOS = + $IVPR_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS5
+Jn $class $IVPR class-not-IVPR5
+$IVPR_IVPR = + $IVPR_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR5
+$IVPR_IVCH = + $IVPR_IVCH 1		: class is IVCH
+Je 0 0 exit
+
+:root-not-IVPR
+					: root is IVCH
+$IVCH_CNT = + $IVCH_CNT 1
+Jn $class $NULL class-not-NULL6
+$IVCH_NULL = + $IVCH_NULL 1		: class is NULL
+Je 0 0 exit
+:class-not-NULL6
+Jn $class $FXPT class-not-FXPT6
+$IVCH_FXPT = + $IVCH_FXPT 1		: class is FXPT
+Je 0 0 exit
+:class-not-FXPT6
+Jn $class $PRDC class-not-PRDC6
+$IVCH_PRDC = + $IVCH_PRDC 1		: class is PRDC
+Je 0 0 exit
+:class-not-PRDC6
+Jn $class $KAOS class-not-KAOS6
+$IVCH_KAOS = + $IVCH_KAOS 1		: class is KAOS
+Je 0 0 exit
+:class-not-KAOS6
+Jn $class $IVPR class-not-IVPR6
+$IVCH_IVPR = + $IVCH_IVPR 1		: class is IVPR
+Je 0 0 exit
+:class-not-IVPR6
+$IVCH_IVCH = + $IVCH_IVCH 1		: class is IVCH
+
+:exit
+

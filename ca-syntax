@@ -1,0 +1,538 @@
+
+<commands>
+
+<commands> -> <command> | <commands> <command>
+
+<command> -> <string> | <number> | <nil returning command> | `:'<word>* | 
+	`%'(<word> | <variable>)* | `('<command>`)' | `o' <string>
+
+<string> -> `"'<word>*`"' | <string command> | <variable>
+
+<printable character> -> anything on the keyboard except: `"'
+
+<string command> -> `Cr' <number> |`Ew' <string> | `Er' <string> | 
+	`Rr' | `Rw' | `Si' <number> <string> <string> |
+	`Ss' <number> <number> <string> | `Sa' <string> <string> | 
+
+<number> -> <floating point number> | <number command>
+
+<floating point number> -> (0-9)+ | (0-9)*.(0-9)+ | (0-9)*.(0-9)*e(0-9)*
+
+<number command> -> `Cn' <number> | `Cs' <number> | `Cl' <number> | 
+	`Ct' <number> | `Cw' <number> | `Gm' <number> | `Ga' <number> | 
+	`Gg' <number> | `Gs' <number> | <measure command> | `Ri' <number> |
+	`Rt' | `Rn' | `Sl' <string> | <binary operator> <number> <number> |
+	`!'<word>*
+
+<binary operator> -> `^' | `+' | `*' | `-' | `/'
+
+<measure command> -> `MEt' <entropy parameters> | `MEs' <entropy parameters> | 
+	`MEl' <entropy parameters> `MMt' <mutual information parameters> | 
+	`MMs' <mutual information parameters> | 
+	`MMl' <mutual information parameters>
+
+<entropy parameters> -> <number> <number>
+
+<mutual information parameters> -> <number> <number> <number>
+	
+<nil returning command> -> `Dw' | `Da' | `Ds' | `Xc' | `Xp' | <jump command> |
+	`Ln' <string> | `Lf' <string> | `Ls' <commands> | 
+	`Lp' <number> <number> | `Lc' | `q' | `V' <number>
+
+<jump command> -> <jump> <string> <string> <word> | 
+	<jump> <number> <number> <word>
+
+<jump> -> `Je' | `Jg' | `Jl' | `Jn'
+
+<word> -> (non-white space characters)*(white space)*
+
+
+<variable> -> `$'(`0'-`9'`A'-`Z'`a'-`z'`_')*
+
+
+
+
+The ca program allows the user to create one-dimensional cellular automata rules
+and worlds.  The worlds can be iterated and displayed as well as examined
+in detail.  Values associated with the world can be saved in user defined
+variables.
+
+The input to the ca program consists of a series of commands.  Each command
+is processed in turn and the results of executing the command are
+indicated.  Presentation of the results can be suppressed.  Commands may
+be read from a command file as well.  When commands are read from a command
+file constructs such as looping become available.  Looping is not
+possible when commands are submitted from the keyboard.  
+
+
+
+Commands:
+
+Cl <number> - Defines the lambda parameter for the next call of Rr (to
+	generate random rules).  The lambda parameter is the percentage
+	of non-zero entries in the rule table.  If <number> is 0 then
+	the lambda parameter is not changed.  <number> must be between
+	0 and 1.
+	
+	The percentage of non-zero entries in the current rule is returned.
+	If there is an error -1 is returned.  The returned value is
+	printed out when in verbose mode.
+
+
+Cn <number> - Define the neighborhood size for cellular automata.  The
+	neighborhood size specifies how far the influence of a single
+	cell in the cellular automaton extends.  Conversely a cell's
+	next state is determined by all cells within a distance of 
+	the neighborhood size.  For example consider the following
+	world for a 2 state cellular automaton:
+		"0011010100011110001110"
+			^
+
+	Under a neighborhood size of 1, the next state of the 
+	cell specified by the `^' is determined by the states surrounding
+	it at a distance of 1, e.g. "010".  Its next state is determined
+	by rule table entry 2 (010 in binary).  Under a neighborhood
+	size of 5, the next state of same cell is determined by
+	the states "11010100011", the next state is then determined
+	by rule table entry 1699 (11010100011 in binary).
+
+	The new neighborhood size is determined by <number>.  If <number>
+	is 0, the neighborhood size is unchanged and the current 
+	neighborhood size is returned.
+
+	The new neighborhood size is returned.  In the event of error
+	-1 is returned.  The returned value is displayed if in verbose mode.
+
+
+Cr <number> - Create cellular automata rule, <number> is the rule
+	number of the rule to create.  The number associated with a
+	rule is according to Wolfram's numbering scheme.  Thus the
+	command `Cr 137' in a 1 neighbor 2 state environment produces the 
+	rule table associated with the string
+	"10001001".  This in turn is interpreted as the following rule
+	table:
+		NEIGHBORHOOD		STATE
+		at previous		at next
+		time step		time step
+		---------------------------------
+		000			1
+		001			0
+		010			0
+		011			1
+		100			0
+		101			0
+		110			0
+		111			1
+
+	Note that the use of Cr is limited to environments whose rule tables can
+	be represented by numbers less than about 2^32.  The 
+	5 neighbor 2 state cellular automata has 2^(2 * 5 + 1) = 2048
+	rules in it, thus a particular rule must be specified by a
+	number of size 2^2048.
+
+	Cr returns the string representing the rule table.  This string
+	is printed out if in verbose mode.
+
+
+Cs <number> - The number of states of the cellular automata are defined.
+	If <number> is 0, the number of states is unchanged and the 
+	current number of states is returned.  Otherwise the new number
+	of states is returned.  In the event of error -1 is returned.
+	The returned value is printed out if in verbose mode.
+
+
+Ct <number> - The number of iterations to perform the next time that Xc
+	is called is defined.  The cellular automata will be iterated
+	<number> times.  If <number> is 0 the number of iterations is
+	unchanged.
+
+	The number of iterations is returned.  In the event of error
+	-1 is returned.  The return value is printed out if in verbose
+	mode.
+
+
+Cw <number> - The size of the world is defined.  The world is a one-dimensional
+	circle.  When Cw is called the old world is destroyed and a new
+	one created.  If <number> is 0 the world is left unchanged.
+
+	The size of the world is returned.  If there is an error -1
+	is returned.  The return value is displayed if verbose mode is
+	on.
+
+
+Da - Display iterations on screen.  The iterated world is displayed one
+	line at a time.  Each line is a single time step.  Ctrl-C
+	can be used to halt the display.  The 0 state is represented by
+	a space ' '.  In a 2-state environment state 1 is represented by
+	an 'X', in an environment with more than two-states each state
+	is represented by the state number ('1', '2', '3', ...).
+
+	There is no value returned.
+
+Ds - Same as Da except that each line is paused following display.  Press
+	<Enter> to continue or 'x' to halt the displaying of states.
+
+Dw - Display X window.  The time evolution of a CA is displayed in an
+	X window.  Selecting the window causes the window to close. 
+	Processing continues even if a window remains open.
+	In the window the zero state is shown as black squares
+	and non-zero states are white.
+
+Er <string> - Set the rule table to match the string.  The string may 
+	take one of the following forms:
+	    digits and `r's:  For example "0110r0r1".  Digits must
+		be between 0 and s-1 inclusive where s is the number
+		of states.  The 0 position (leftmost) in the 
+		string represents the state to transition to 
+		if all states in the neighborhood are all in the
+		highest state.  In the example position 0 is a 0.
+		The digit in the string at its furthest right end
+		is the state to transition to if all states in the
+		neighborhood are 0.  In this case that state is
+		1.  The letter r in a position indicates that the
+		state to be chosen is to be random and different
+		than the current rule for that position.  If the 
+		string is shorter than the size of the rule table then
+		only the uppermost n rules are changed where n is the
+		length of the string.  If the string is longer than the
+		size of the rule table then the additional positions at
+		the right end of the string are ignored.  
+
+	    +: The rule is to be the next sequential rule.  Thus if
+		the current rule is "01101011" and the command `Er "+"'
+		is issued then the new rule will be "01101100".
+
+	    -: The rule is to be previous sequential rule.  Thus if
+		the current rule is "01101011" and the command `Er "-"'
+		is issued then the new rule will be "01101010".
+
+	    z: The new rule is to be the 0 rule.  That is the rule
+		consisting of all rules going to the 0 state.
+
+	Er retruns the string representing the rule table.  The string
+	is displayed when in verbose mode.
+
+
+Ew <string> - Set the world state to match the string.  The string must
+	consist of digits representing the state at each position of
+	the world.  A 2 state world of size 15 can then be specified by
+	the command `Ew "011100011011010"'.  If the length of the
+	string is shorter than the size of the world then only the
+	first world positions up to the length of <string> are
+	changed.  If the length of the the string is longer than the
+	size of the world then the remaining digits of the string are
+	ignored.
+
+	The string representing the new world configuration is
+	returned.  This string is printed out if in verbose mode.  The
+	command `Ew ""' can be used to return a string representing the
+	current state of the world.
+
+Je <value1> <value2> <word> - Jump to a line in a command file (see
+	the `o <string>' command) if the two values are equal, continue
+	interpreting commands at the next line if they are not.  The 
+	values can be either both strings or both numbers.
+
+	If the jump is taken there must be a line in the command file
+	of the form `:word'.  The colon `:' must be the first character 
+	on that line.  Jumps cannot be taken across command files.
+
+	If the jump is not taken the next command executed
+	is the one following the line with the jump (Je) command.  
+
+	There is nothing returned by the Je command.
+
+Jg <value1> <value2> <word> - Same as Je only jump is taken if
+	<value1> is greater than <value2>.  If <value1> and <value2>
+	are strings the comparison is lexicographic.
+
+Jl <value1> <value2> <word> - Same as Je only jump is taken if
+	<value1> is less than <value2>.  If <value1> and <value2>
+	are strings the comparison is lexicographic.
+
+Jn <value1> <value2> <word> - Same as Je only jump is taken if
+	<value1> is not equal to <value2>.  
+
+
+Lc - Close the current logging file.  Causes the currently named
+	logging file (see Ln command) to be closed.
+
+
+Lf - Flush the current logging file.  Causes any data
+	that has been written and may still be in buffers
+	to be flushed to the currently named
+	logging file.
+
+
+Ln <string> - Name the current logging file.  Several files may be
+	opened and written to in order to record data in different
+	formats.  Logging is done using the Lp and Ls commands.
+
+	Ln causes the next Lp and Ls commands to append data to that
+	already in the file named by <string>.  If this file has not been
+	opened previously then it will be opened.  Open logging
+	files remain open until a call of Lc which closes them.
+
+Lp <number1> <number2> - Write the numbers specified to the current logging
+	file.  Used for generating point pairs (e.g. for spoof).
+	Numbers are written out in floating point ("%g") format.
+
+
+Ls <value>* - Write a line of data to the current logging file.  <value>
+	can be either a string or a number.  Many different values can
+	exist on a single line.  Each value is separated by a space ` '
+	from any succeeding values.  Numbers are written out in 
+	floating point ("%g") format.
+
+
+
+MEl <number1> <number2> - Measure entropy of a single time step.  Same
+	as MEs except that rather than start at time step <number1>
+	and examine all blocks to the end of iteration.  Only the blocks
+	in time step <number1> are examined.
+
+MEs <number1> <number2> - Measure entropy of blocks.  Any time
+	after an iteration by the Xc command MEs returns the entropy of
+	all spatial blocks of size <number2> starting at time step
+	<number1> and proceeding to the last iteration (defined by
+	Ct).
+
+	A state/block combination is the result of examining the states
+	of a sequence of cells constituting a block.  The particular
+	order that the states are arranged in for that block yield an
+	item in a set of state/block combinations.  The size of the set
+	of state/block combinations is s^b where s is the number of
+	states and b is the size of a block.
+
+	The number of entries of each state/block combination are
+	totaled for all blocks between time step <number1> and the last
+	time step (iteration).  The totals are each divided by the
+	number of blocks looked at to yield a probability distribution
+	for each state/block combination.  The sum over all state/block
+	combinations of their probability times the log of their
+	probability is the entropy.
+
+	The entropy is returned. The returned value is printed out if
+	in verbose mode.
+
+
+MEl <number1> <number2> - Measure temporal entropy of a single time step.  Same
+	as MEs except that the blocks are defined to extend across time rather
+	than the world.  Thus blocks consist of a cell and its iterated 
+	states at <number2> successive time steps.  All blocks from <number1>
+	to the last iteration (minus <number2>) time step are examined.
+
+
+MMl <number1> <number2> <number3> - Measure spatial mutual information of
+	a single time step.  This is the same as MMs except that the 
+	information is gathered over the single time step specified
+	by <number1> rather than from <number1> through the end of
+	the iteration.
+
+	
+MMs <number1> <number2> <number3> - Measure spatial mutual information.  
+	Any time after an iteration by the Xc command MMs returns the
+	mutual information measure between blocks.  The first block is
+	defined to start at world position 0 at time step <number1>.
+	The block consists of a cell and its neighbors to the right the
+	block size is determined by <number3>.
+
+	The second block starts a distance <number2> away from the
+	first block.  If <number2> is less than the size of the world
+	(see Cw command), then blocks within the same time step are
+	compared.  If <number2> were exactly the world size then the
+	comparison would be between each position and itself at the
+	next time step.  All blocks separated by distance <number2>
+	starting at <number1> and ending at the end of the iteration
+	(defined by Ct) are compared.
+
+	The number returned is the difference between the sum of the
+	entropies of the first and second blocks and the entropy of all
+	pairings of two blocks of size <number3> and separated by
+	distance <number2>.
+
+	The returned value is printed out if in verbose mode.
+
+MMt <number1> <number2> <number3> - Measure temporal mutual
+	information.  This is the same as MMs except that the blocks
+	are taken to be defined temporally rather than spatially.  I.e.
+	a block size of 3 defines a block consisting of the state of a
+	cell position and its states at the next two time steps.
+
+
+o <string> - Open a command file.  A command file is a file consisting
+	of commands.  The advantage of using a command file over
+	keyboard input is that command files permit looping (see Je,
+	Jg, Jl, Jn commands), can act as subroutines, and allow for
+	a permanent record of the data generated.
+
+	The file specified by <string> is opened and commands are read
+	from the file and interpreted as though they had been
+	typed in at the keyboard.
+
+	When jump commands are encountered and the jump is to be taken,
+	the file is rewound and read line by line until the branch 
+	label is found.
+
+	A message naming the file is printed if in verbose mode.
+
+
+q - Quit.  Exit program.  Prints quit if in verbose mode.
+
+
+Ri <number> - Initializes the random number generator.  This allows 
+	programs using random numbers to generate identical results 
+	each time the program is run.  
+	
+	The seed <number> is returned.  The return value is displayed
+	if in verbose mode.
+
+
+Rr - The rule table is set to a random rule based on the current lambda
+	value (see Cl).  That is, the number of non-zero rules in the 
+	rule table will be as close to lambda as is possible.
+	The rule for the neighborhood of all 0's is always 0.
+	This supports the definition of a quiescent or dead state.
+
+	The string representing the new rule table is returned.  This
+	string is printed out if in verbose mode.
+
+
+Rt - A random integer determined by the microsecond counter of the
+	internal clock is returned.  Nothing is displayed.
+
+
+Rn - A random rational number greater than or equal to 0 and strictly
+	less than 1 is returned.  The random number is accurate to
+	1 in 10^6.  A random number between 0 and 999999 is
+	selected and then divided by 1000000.  The result is returned.
+	Nothing is displayed.
+
+
+Rw - A random world consisting of all states equally represented is 
+	generated.  
+	
+	A string representing the world is returned.  This string
+	is displayed when in verbose mode.
+
+
+Sa <string1> <string2> - The string generated by appending string2 to string1
+	is retuned.  The new string is not displayed but could be in 
+	the manner described for the command Si.
+
+
+Si <number> <string1> <string2> - Create a new string by overwriting
+	string2 over string1 starting at position number.  The resulting
+	string is the length of string1.  If string2 + number is longer
+	than string1 then string2 is truncated to fit.
+	
+	This command can be useful for generating a random change in a rule as
+	follows:
+		`$random_position = * Rn (Sl (Er ""))'
+		`Er (Si $random_position (Er "") "r")'
+
+	In this example $random_position is set to be a random number
+	between 0 and size of the rule table (`Sl (Er "")').  The
+	new rule table will be identical to the old rule table except
+	for the rule specified by $random_position.
+
+	The string created is returned, it is never directly displayed but
+	could be displayed as follows if in verbose mode:
+		`$display_string = Si ...'
+		`%returned string = $display_string'
+
+
+Sl <string> - The length of <string> is returned.  Nothing is displayed.
+	In the event of error, -1 is returned.
+
+
+Ss <number1> <number2> <string1> - Create a string that is the substring
+	of string1.  The new string will be the string that starts at
+	position number1 in string1 and continues for length number2.
+	For example:
+		`Ss 5 3 "abcdefghijkl"'
+	
+	would return the string "fgh".
+
+	The new string is returned.  It is not displayed but could be
+	in the manner described for the command Si.
+
+
+V <number> - Turn on or off verbose mode.  In verbose mode the results of
+	various operations as well as comments following the `%' character are
+	printed to the standard output.  If verbose mode is off these
+	messages are suppressed.
+
+	If <number> evaluates to 0, verbose mode is turned off.  If
+	<number> evaluates to anything else, verbose mode is turned on.
+
+
+Xc - Iterate the cellular automata for the number of time steps specified
+	by the last Ct command.  The rules for updating the cellular
+	automata is as defined by the most recent Er, Cr or Rr command.
+	The initial world state for iteration is defined the last state
+	of the previous iteration (Xc) or the most recent call of the Ew or
+	Rw command.  The iterated states
+	can be displayed using either Da, Ds, or Dw
+	commands.  
+
+	Nothing is returned by this command.
+
+
+%(<word | <variable>) - Printable comment.  If verbose mode is turned
+	on everything on the line following a `%' character is printed
+	to standard output.  Before sending the comment, variables are
+	expanded to their current value.  String variables are enclosed
+	in double quotes `"' after expansion also.
+
+
+$variable - Variable.  A variable is a user defined
+	data item that can take on as its value either a number or a
+	string.  Variables can be used anywhere that strings or numbers
+	are expected.
+
+	A command of the form $variable = <number> or $variable = <string>
+	causes the value of the right hand side of the assignment to be 
+	assigned to $variable.  The return value of an assignment is the
+	returned value of the variable.
+
+	A variable is initialized to be the number 0 the first time that it is 
+	refrerred to.  Once a variable has had a string assigned to
+	it, it can not subsequently have a number assigned to it.
+	
+	Variable names can be letters, digits,
+	or underscores `_'.  Variable names are case sensitive.
+
+	The scope of variables is global, variables created in a command
+	file can be referenced by commands in another file.  
+	Variables created in a command file persist after the command file
+	has been closed.  
+
+
++ <number1> <number2> - The sum <number1> + <number2> is returned.
+	Nothing is displayed.
+
+- <number1> <number2> - The difference <number1> - <number2> is returned.
+	Nothing is displayed.
+
+* <number1> <number2> - The product <number1> * <number2> is returned.
+	Nothing is displayed.
+
+/ <number1> <number2> - The quotient <number1> / <number2> is returned.
+	Nothing is displayed.
+
+^ <number1> <number2> - The power <number1> ^ <number2> is returned.
+	Nothing is displayed.
+
+
+!<word>* - Execute a system call.  The characters following the exclamation
+	point are passed to the operating system.  The return value from
+	the operating system call is returned.
+
+(<command>) - Commands can be nested within parentheses.  These parens
+	are ignored since the grammar is unambiguous 
+	so they are purely to make reading a long command easier visually.
+
+
+"<word>*" - Explicitly declare a string.
+

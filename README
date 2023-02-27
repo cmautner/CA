@@ -1,0 +1,25 @@
+The copy of this program in this directory has been slightly altered.
+ 
+Makefile: 
+	Debugging turned off so that optimization is on.
+	Statement that moves executable to ../run removed.
+
+	ca-plot.c added, reference to -l4014 for plotting device
+	drivers added.
+
+ca-parse.c:
+	Name of help file renamed to ca.help
+	(Used to give a now defunct abs. path to
+	Mautner's acct.)
+
+	Support in parse_display() for Dp command. (Display
+		with UNIX plot)
+
+addition of subdirectory tek:
+	Some of my files and the executable reside here.
+	In particular, ca.help is a very light edit of ca-syntax in this
+	directory.
+
+addition of file ca-plot.c:
+	Contains plotting code for UNIX plot on graphics terminals.
+	Heavily based on ca-X.c
