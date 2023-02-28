@@ -2,10 +2,22 @@
 
 #define INT_EXT	extern 	/* causes all variables in ca.h to be external	*/
 
+#include <float.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/time.h>
+
 #include "ca.h"
 #include <values.h>
 
-		
+void run_evolve();
+void iterate_ca(struct CA *source_ca);
+int disp_plot();
+int disp_window();
+
+
 /************************************************************************
  *									*
  * check_for_string() ensures that the next input parsed is a string	*
@@ -84,7 +96,7 @@ char *s, **next_char;
 	if (verbose)
 	    printf("root CA neighborhood size = %d\n", root.neighborhood);
 	break;
-      
+
 
       case 's':					/* number of states	*/
 	rv = set_option(s+2, next_char);
@@ -113,7 +125,7 @@ char *s, **next_char;
 	if (verbose)
 	    printf("root CA number of states = %d\n", root.states);
 	break;
-      
+
 
       case 'l': 	/* lambda parameter (% of rules that are not 0)	*/
 	lambda = set_option(s+2, next_char);
@@ -137,12 +149,12 @@ char *s, **next_char;
 	for (i=0, j=0; i<ts; i++)
 	    if (root.rule_table[i])
 		j++;
-	
+
 	rv = ((double) j) / ((double) ts);
 
 	if (verbose)
 	    printf(
-	"lambda of current rule= %g. lambda of next random rule = %g\n", rv, 
+	"lambda of current rule= %g. lambda of next random rule = %g\n", rv,
 								root.lambda);
 	break;
 
@@ -152,10 +164,10 @@ char *s, **next_char;
 	ts = (int) pow((double) root.states, (double)(root.neighborhood*2 + 1));
 
 	max_rule = pow((double) root.states, (double) ts);
-	max_double = pow((double) 2, (double)DSIGNIF);
+	max_double = DBL_MAX;
 
 	if (max_rule > max_double) {
-	    printf("max rule = %g, unable to parse rule numbers beyond %g\n", 
+	    printf("max rule = %g, unable to parse rule numbers beyond %g\n",
 							max_rule, max_double);
 	    rv = -1;
 	    *next_char = s + strlen(s);
@@ -186,7 +198,7 @@ char *s, **next_char;
 	if (verbose)
 	    printf("rule table = \"%s\"\n", rule_string);
 	return_type = STRING;
-	rv = (double) (int) rule_string;
+	rv = (double)(long long) rule_string;
 	break;
 
 
@@ -289,7 +301,7 @@ char *s, **next_char;
       case 'a':				/* display iterations fully	*/
       case 's':			/* display automata one line at a time	*/
 	*next_char = s+2;	/* continue parsing after Da or Ds	*/
-	
+
 	if (*(s+1) == 's')	/* Ds, display one line at a time	*/
 	  printf("Enter for new line, x to quit\n");
 	else 		/* Da, display entire contents of ca_states	*/
@@ -302,14 +314,16 @@ char *s, **next_char;
 	    if (ca_states[i*world_size + j] == 0)
 	      printf(" ");		/* space for quiescent state	*/
 	    else if (root.states == 2)	/* use X for two state rules	*/
-	      printf("X");		
+	      printf("X");
 	    else			/* use state # for > 2 states	*/
 	      printf("%1d",ca_states[i*world_size + j]);
 
-	    
+
 	  }
 	  if (*(s+1) == 's') {	/* Ds, look for input after each line	*/
-	    gets(buf);
+	    if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			break;
+		}
 	    if ((*buf == 'x') || (*buf == 'X'))
 	      break;
 	  }
@@ -365,13 +379,13 @@ char *s, **next_char;
 	if (rv <= 0)
 	    return(rv);
 
-	input = (char *) (int) rv;
+	input = (char*) (long long) rv;
 
 
 	for (i=0; i<world_size; i++) {	/* check input for errors	*/
 	  if (input[i] == '\0')
 	    break;
-	  
+
 	  if ((input[i] < '0') || (input[i] >= root.states + '0')) {
 	    parse_error(&input[i]);		/* input out of range	*/
 	    free(input);
@@ -396,7 +410,7 @@ char *s, **next_char;
 	    line[i] = root.world[i] + '0';
 	line[i] = '\0';					/* terminate	*/
 
-	rv = (double) (int) line;
+	rv = (double)(long long) line;
 	return_type = STRING;		/* indicate string returned	*/
 
 	if (verbose)
@@ -425,7 +439,7 @@ char *s, **next_char;
 	if ((rv = check_for_string(s+2, next_char)) < 0)
 	    return(rv);					/* not a string	*/
 
-	rule_string = (char *) (int) rv;
+	rule_string = (char*) (long long) rv;
 					/* calculate number of rules	*/
 	ts = (int) pow((double) root.states, (double)(root.neighborhood*2 + 1));
 
@@ -451,7 +465,7 @@ char *s, **next_char;
 		  }
 	      }
 	      break;
-	
+
 	  case 'z':					/* zero rule	*/
 	      for (i=0; i<ts; i++) {
 		  root.rule_table[i] = 0;
@@ -461,7 +475,7 @@ char *s, **next_char;
 	  default:      			/* interpret string	*/
 	    for (i=0; (i<ts) && (c = rule_string[i]); i++) {
 	      if (c=='r') {				/* random state */
-		  root.rule_table[ts - i -1] += 
+		  root.rule_table[ts - i -1] +=
 			1 + (int)((double) (root.states - 1) * my_random());
 		  root.rule_table[ts - i -1] %= root.states;
 	      }
@@ -480,9 +494,9 @@ char *s, **next_char;
 	for (i=ts-1; i>=0; i--)		/* copy rule table to string	*/
 	    rule_string[ts-1-i] = root.rule_table[i] + '0';
 
-	rv = (double) (int) rule_string;/* return pointer to string	*/
+	rv = (double)(long long) rule_string;/* return pointer to string	*/
 	return_type = STRING;	/* indicate string being returned	*/
-	
+
 	if (verbose)
 	    printf("rule table = \"%s\"\n", rule_string);
 	break;						/* end 'r'	*/
@@ -521,7 +535,7 @@ char *s, **next_char;
 					 * exhausted			*/
 	  run_evolve();
 	  break;
-	
+
 	default:					/* oops		*/
 	  parse_error(s);
 	  rv = -1;
@@ -558,7 +572,7 @@ char *s, **next_char;
 	      printf("GA mutation rate = %g\n", mutation_rate);
 	  rv = mutation_rate;
 	  break;
-	
+
 	case 'a':				/* augmentation rate	*/
 	  augmentation_rate = (float)set_option(s+2, next_char);
 	  if (return_type != NUMBER) {	/* string returned, oops	*/
@@ -604,7 +618,7 @@ char *s, **next_char;
 	  else if (rv > 0)			/* copy to pop_size	*/
 	      pop_size = rv;
 	  else				/* rv==0, return current value	*/
-	      rv = pop_size;		
+	      rv = pop_size;
 
 	  if (verbose)
 	      printf("population size = %d\n",pop_size);
@@ -658,14 +672,14 @@ char *s, **next_char;
 	*next_char = s + strlen(s);
 	return(-1);
     }
-    
+
     target[0] = '\0';			/* terminate so sscanf error 	*
 					 * will be noticed		*/
 
     switch(*(s+1)) {
       case 'e':				/* jump if equal		*/
 	if (first_flag == STRING) {	/* comparing strings		*/
-	  if (strcmp((char *) (int) first, (char *) (int) second)) {
+	  if (strcmp((char*) (long long) first, (char*) (long long) second)) {
 	    rv = 0; break;
 	  }
 	}
@@ -678,7 +692,7 @@ char *s, **next_char;
 
       case 'n':				/* jump if not equal		*/
 	if (first_flag == STRING) {	/* strings			*/
-	  if (strcmp((char *) (int) first, (char *) (int) second) == 0) {
+	  if (strcmp((char*) (long long) first, (char*) (long long) second) == 0) {
 	    rv = 0; break;		/* unsuccesful			*/
 	  }
 	}
@@ -691,7 +705,7 @@ char *s, **next_char;
 
       case 'l':				/* jump if less than		*/
 	if (first_flag == STRING) {	/* comparing strings		*/
-	  if (strcmp((char *) (int) first, (char *) (int) second) >= 0) {
+	  if (strcmp((char*) (long long) first, (char*) (long long) second) >= 0) {
 	    rv = 0; break;		/* unsuccesful 			*/
 	  }
 	}
@@ -704,7 +718,7 @@ char *s, **next_char;
 
       case 'g':				/* jump if greater than		*/
 	if (first_flag == STRING) {	/* strings			*/
-	  if (strcmp((char *) (int) first, (char *) (int) second) <= 0) {
+	  if (strcmp((char*) (long long) first, (char*) (long long) second) <= 0) {
 	    rv = 0; break;		/* unsuccess			*/
 	  }
 	}
@@ -731,12 +745,12 @@ char *s, **next_char;
     return_type = NRV;
     if ((rv == -1) || (rv == 0.0))
       return(rv);
-    
+
     rewind(option_file_ndx->fp);	/* go to beginning of file	*/
     while(1) {				/* read until target label or	*
 					 * end of file			*/
       if (fgets(input_line, 200, option_file_ndx->fp) == NULL) {
-	printf("target label :%s not found in file %s\n", target, 
+	printf("target label :%s not found in file %s\n", target,
 							option_file_ndx->name);
 	*next_char = s + strlen(s);
 	return_type = ERROR;
@@ -767,7 +781,7 @@ char *s, **next_char;
      struct file_struct *fsp, *first_opening;
 
      first_opening = NULL;
-     
+
     for (fsp=&logging_files[0]; fsp!=logging_files_ndx; fsp++) {
 	if (strcmp(fsp->name, log_file_name) == 0) {
 			/* name matches, return fp, may open first	*/
@@ -796,7 +810,7 @@ char *s, **next_char;
 
 } /* end get_log_file() */
 
-	 
+
 /************************************************************************
  *									*
  * parse_logging() opens, closes, and maintains the current logging	*
@@ -819,7 +833,7 @@ char *s, **next_char;
 	if (rv <= 0)				/* not a string		*/
 	    return(rv);
 
-	log_file_name = (char *) (int) rv;
+	log_file_name = (char*) (long long) rv;
 	log_file = get_log_file(log_file_name);
 
 	if (log_file != NULL) {		/* log file opened ok		*/
@@ -834,7 +848,7 @@ char *s, **next_char;
 	free(log_file_name);			/* free the space	*/
 	break;
 
-      
+
       case 'f':					/* flush log file	*/
 	if (log_file == NULL) {		/* oops, no log file to flush	*/
 	    printf("no log file selected\n");
@@ -861,8 +875,8 @@ char *s, **next_char;
 
 	    rv = set_option(*next_char, next_char);
 	    if (return_type == STRING) {	/* print the string	*/
-		fprintf(log_file, "%s", (char *) (int) rv);
-		free((char *) (int) rv);
+		fprintf(log_file, "%s", (char*) (long long) rv);
+		free((char*) (long long) rv);
 	    }
 	    else if (return_type == NUMBER)	/* print the value	*/
 		fprintf(log_file, "%g ", rv);
@@ -883,7 +897,7 @@ char *s, **next_char;
 	    return_type = ERROR;
 	    break;
 	}
-				
+
 	rv = set_option(s+2, next_char);	/* plot the first point	*/
 	if (return_type != NUMBER) {
 	    if (return_type != ERROR)
@@ -986,12 +1000,12 @@ char *s, **next_char;
 	    break;					/* return -1	*/
 	}
 
-	if ((next_item == *next_char) || (i_time < 0) || 
+	if ((next_item == *next_char) || (i_time < 0) ||
 					(block_size <= 0) || (separation < 0)) {
 	    parse_error(s);	/* error in one or more parameters	*/
 	    break;
 	}
-	
+
 	if (temporal=='t')
 	    limit = &ca_states[(time_step-block_size) * world_size];
 	else if (temporal=='s')
@@ -1001,7 +1015,7 @@ char *s, **next_char;
 
 				/* calculate mutual information based	*
 				 * on parameters read in		*/
-	rv = mut_inf_space_time(i_time, separation, limit, block_size, 
+	rv = mut_inf_space_time(i_time, separation, limit, block_size,
 								temporal=='t');
 
 	if (verbose) {			/* print results		*/
@@ -1010,7 +1024,7 @@ char *s, **next_char;
 	    else
 		msg = "spatial";
 	    printf (
-	"%s MI = %g: block size = %d, start time = %d, separation = %d\n", 
+	"%s MI = %g: block size = %d, start time = %d, separation = %d\n",
 				msg, rv, block_size, i_time, separation);
 	}
 	return_type = NUMBER;
@@ -1040,15 +1054,15 @@ char *s, **next_char;
 		break;
 	    }
 
-	    rv = space_entropy(&ca_states[line_no * world_size], 
+	    rv = space_entropy(&ca_states[line_no * world_size],
 				(time_step-line_no)*world_size, block_size, 0);
 	    if (verbose)
 		printf(
-		"spatial entropy = %g: block size = %d, start time = %d\n", 
+		"spatial entropy = %g: block size = %d, start time = %d\n",
 						rv, block_size, line_no);
 	    return_type = NUMBER;
 	    break;
-	
+
 	  case 'l':		/* calculate entropy of adjacent blocks	*
 				 * in a single time step		*/
 	    line_no = (int) set_option(s+3, next_char);
@@ -1070,12 +1084,12 @@ char *s, **next_char;
 		break;
 	    }
 
-	    rv = space_entropy(&ca_states[line_no*world_size], world_size, 
+	    rv = space_entropy(&ca_states[line_no*world_size], world_size,
 								block_size, 0);
 
 	    if (verbose)
 		printf(
-		"spatial entropy = %g: block size = %d, at time = %d\n", 
+		"spatial entropy = %g: block size = %d, at time = %d\n",
 						rv, block_size, line_no);
 	    return_type = NUMBER;
 	    break;
@@ -1102,8 +1116,8 @@ char *s, **next_char;
 		break;
 	    }
 
-	    rv=space_entropy(&ca_states[line_no*world_size], 
-		(time_step - line_no - (block_size - 1)) * world_size, 
+	    rv=space_entropy(&ca_states[line_no*world_size],
+		(time_step - line_no - (block_size - 1)) * world_size,
 								block_size, 1);
 
 	    if (verbose)
@@ -1125,9 +1139,9 @@ char *s, **next_char;
 	*next_char = s + strlen(s);
 	parse_error(s);
 	break;
-	
+
     } /* end switch *(s+1) */
-    
+
     return(rv);
 }
 
@@ -1145,7 +1159,6 @@ char *s, **next_char;
     int offset;
     unsigned init_seed;
     struct timeval tv;
-    struct timezone tz;
 
 
     switch(*(s + 1)) {
@@ -1165,7 +1178,7 @@ char *s, **next_char;
 	break;
 
       case 't': 			/* return usec time of day	*/
-	gettimeofday(&tv, &tz);
+	gettimeofday(&tv, NULL);
 	*next_char = s+2;
 	rv = (double) tv.tv_usec;
 	return_type = NUMBER;
@@ -1209,7 +1222,7 @@ char *s, **next_char;
     double rv = -1.0;
     int index, length;
     char *string, *insert_string, *sub_string;
-    
+
     switch (*(s + 1)) {
       case 'i':			/* insert one string into another	*/
 					/* position of insert		*/
@@ -1221,33 +1234,33 @@ char *s, **next_char;
 	}
 
 					/* read source string		*/
-	string = (char *) (int) check_for_string(*next_char, next_char);
-	if ((int) string <= 0)
+	string = (char*) (long long) check_for_string(*next_char, next_char);
+	if ((long long) string <= 0)
 	    break;
 
 					/* read insert string		*/
-	insert_string = (char *) (int) check_for_string(*next_char, next_char);
-	if ((int) insert_string <= 0) {
+	insert_string = (char*) (long long) check_for_string(*next_char, next_char);
+	if ((long long) insert_string <= 0) {
 	    free(string);
 	    break;
 	}
 
-	rv = (double) (int) string;	/* return will be source string	*/
+	rv = (double)(long long) string;	/* return will be source string	*/
 
 				/* copy until end of either string	*/
-	for (string = &string[index]; *string && *insert_string; 
+	for (string = &string[index]; *string && *insert_string;
 						string++, insert_string++) {
 	    *string = *insert_string;
 	}
 	free(insert_string);		/* release space		*/
 	return_type = STRING;		/* indicate string return	*/
 	break;
-    
+
       case 'l':				/* measure length of string	*/
-	string = (char *) (int) check_for_string(s+2, next_char);
-	if ((int)string <= 0)
+	string = (char*) (long long) check_for_string(s+2, next_char);
+	if ((long long)string <= 0)
 	    break;
-	
+
 	rv = (double) strlen(string);
 	free(string);
 	return_type = NUMBER;
@@ -1270,9 +1283,9 @@ char *s, **next_char;
 	    break;					/* return -1	*/
 	}
 
-	string = (char *) (int) check_for_string(*next_char, next_char);
+	string = (char*) (long long) check_for_string(*next_char, next_char);
 
-	if ((index < 0) || (length <= 0) || ((int) string <= 0)) {
+	if ((index < 0) || (length <= 0) || ((long long) string <= 0)) {
 	    *next_char = s + strlen(s);
 	    break;
 	}
@@ -1287,12 +1300,12 @@ char *s, **next_char;
 
       case 'a':					/* append two strings	*/
 						/* get first string	*/
-	insert_string = (char *) (int) check_for_string(s+2, next_char);
-	if ((int) insert_string <= 0)
+	insert_string = (char*) (long long) check_for_string(s+2, next_char);
+	if ((long long) insert_string <= 0)
 	    break;
 						/* get second string	*/
-	string = (char *) (int) check_for_string(*next_char, next_char);
-	if ((int) string <= 0)
+	string = (char*) (long long) check_for_string(*next_char, next_char);
+	if ((long long) string <= 0)
 	    break;
 					/* make space for result	*/
 	if (get_space(&sub_string, strlen(insert_string) + strlen(string) + 1,
@@ -1302,18 +1315,18 @@ char *s, **next_char;
 	strcat(sub_string, string);		/* append second string	*/
 	free(insert_string);			/* release space	*/
 	free(string);				/* release space	*/
-	rv = (double) (int) sub_string;
+	rv = (double)(long long) sub_string;
 	return_type = STRING;
-	break;	
+	break;
 
-	
+
       default:						/* oops		*/
 	parse_error(s);
 	break;
     }
     return(rv);
 }
-	
+
 
 /************************************************************************
  *									*
@@ -1327,7 +1340,7 @@ char *s, **next_char;
  ************************************************************************/
 double parse_variable(s, next_char)
 char *s, **next_char;
-{ 
+{
     char *new_string;
     double rv = -1.0;
     char var_name[20], string[80];
@@ -1356,23 +1369,23 @@ char *s, **next_char;
 	    parse_err = 1;
 	    return(-1);
 	  }
-	  free((char *) (int) var->value);	/* release last string	*/
+	  free((char*) (long long) var->value);	/* release last string	*/
 	}
 	var->value = rv;		/* assign result of next parse	*/
 	if (return_type == STRING) {	/* indicate string returned	*/
 	    var->string_flag = 1;
-	    rv = get_string((char *)(int)rv);	/* make copy to return	*/
+	    rv = get_string((char*)(long long)rv);	/* make copy to return	*/
 	}
     }
     else if (var->string_flag) {	/* string variable returned,	*
 					 * copy string into new space	*/
-	if (get_space(&new_string, strlen((char *)(int)var->value) + 1, 
+	if (get_space(&new_string, strlen((char*)(long long)var->value) + 1,
 								sizeof(char)))
 	    return(-1);
 
-	strcpy(new_string, (char *)(int)var->value);
+	strcpy(new_string, (char*)(long long)var->value);
 
-	rv = (double) (int) new_string;	/* return pointer to new space	*/
+	rv = (double) (long long) new_string;	/* return pointer to new space	*/
 	return_type = STRING;
     }
     else {				/* number returned, return it	*/
@@ -1404,7 +1417,7 @@ char *s, **next_char;
     if (rv <= 0)
 	return(rv);
 
-    filename = (char *) (int) rv;
+    filename = (char*) (long long) rv;
     if (verbose)
 	printf("reading commands from file: %s\n", filename);
 
@@ -1432,7 +1445,7 @@ char *s, **next_char;
 /*    var = var_header;	*/	/* read to end of existing variables	*
 				 * all new variables will be deleted	*
 				 * when this file is closed		*/
-/*    while (var->next) 
+/*    while (var->next)
       var = var->next;	*/
 
     while (!feof(fp)) {		/* read until end of file		*/
@@ -1443,7 +1456,7 @@ char *s, **next_char;
 
     	if (fgets(line, 4100, fp) == NULL)	/* read up to MAX_RULE	*/
             continue;				/* empty line		*/
-    
+
 	if (int_hit) {				/* ^C pressed		*/
 	    break;
 	}
@@ -1452,10 +1465,10 @@ char *s, **next_char;
 	while (*next) {		/* scan commands until end of line	*/
 	    rv = set_option(next, &next);
 	    if (return_type)
-	       free((char *) (int) rv);
+	       free((char*) (long long) rv);
 	}
     }
-    
+
     if (fclose(fp))			/* close file			*/
         printf("error closing options file \n");
 
@@ -1464,13 +1477,13 @@ char *s, **next_char;
 /*    while (var) {
 	next_var = var->next;
 	if (var->string_flag)	*/	/* release strings as well	*/
-/*	    free((char *) (int) var->value);
+/*	    free((char*) (long long) var->value);
 	free(var);
 	var = next_var;
     }	*/
 
     option_file_ndx--;			/* back up open file list	*/
-        
+
     return_type = NRV;
     return(0);
 } /* end get_options() */
@@ -1529,7 +1542,7 @@ char	*command, 		/* string containing input command	*/
 	    command++;
 	    continue;				/* to top of while(1)	*/
 
-	
+
 	  case	0:				/* end of string	*/
 	  case	'\n':				/* end of line		*/
 	  case  ':':			/* unprinted comment line or 	*
@@ -1539,13 +1552,13 @@ char	*command, 		/* string containing input command	*/
 	    rv = 0.0;
 	    break;
 
-	
+
           case	'q':						/* quit	*/
 	    if (verbose)
-		printf("quit\n"); 
+		printf("quit\n");
 	    exit(0);
-	
-	
+
+
           case	'R':		/* Random, find out which action	*/
 	    rv = parse_random(command, next_char);
 	    break;
@@ -1568,8 +1581,8 @@ char	*command, 		/* string containing input command	*/
 	  case 'G':				/* GA parameters	*/
 	    rv = parse_ga(command, next_char);
 	    break;
-	    
-	    
+
+
 	  case 'o':				/* read in options file	*/
 	    rv = get_options(command, next_char);
 	    break;
@@ -1602,7 +1615,7 @@ char	*command, 		/* string containing input command	*/
 	      rv = parse_variable(command, next_char);
 	      break;
 
-		      
+
 	  case '^':			/* add next two commands	*/
 	    temp = set_option(command+1,next_char);
 	    if (return_type != NUMBER) {
@@ -1690,8 +1703,8 @@ char	*command, 		/* string containing input command	*/
 	  case 'X':		/* execute CA iteration or GA evolution	*/
 	    rv = parse_execute(command, next_char);
 	    break;
-	
-	
+
+
 	  case '.':		/* floating point number, return value	*/
 	  case '0':
 	  case '1':
@@ -1730,7 +1743,7 @@ char	*command, 		/* string containing input command	*/
 	  case 'S':				/* index into string	*/
 	    rv = parse_string(command, next_char);
 	    break;
-	    
+
 
 	  case '"':			/* string constant, used for	*
 					 * filenames, rule tables, 	*
@@ -1748,7 +1761,7 @@ char	*command, 		/* string containing input command	*/
 				 * or create a new permanent place for	*
 				 * string				*/
 	    rv = get_string(string);
-				
+
 
 	    if (c=='"') 		/* start next command after	*
 					 * closing quote if it exists	*/
@@ -1766,7 +1779,7 @@ char	*command, 		/* string containing input command	*/
 	  case '%':		/* print a comment onto standard output	*
 				 * print value or string associated w/	*
 				 * variables starting w/ $		*/
-			
+
 	    if (!verbose) {		/* only print if in verbose 	*
 					 * mode 'V 0/1'			*/
 	      *next_char = command + strlen(command);
@@ -1785,7 +1798,7 @@ char	*command, 		/* string containing input command	*/
 
 					/* if string, print in "..."	*/
 		if (var_ptr->string_flag)
-		    printf("\"%s\"", (char *) (int) var_ptr->value);
+		    printf("\"%s\"", (char *)(long long)var_ptr->value);
 		else				/* just print value	*/
 		    printf("%g", var_ptr->value);
 		i += offset;			/* skip string name	*/
@@ -1809,7 +1822,7 @@ char	*command, 		/* string containing input command	*/
 /* 4-17-91 Thomas E. Kammeyer -- Changed the path name on following line so
  * I could have a help file available!
  */
-	    rv = (double) system("/usr/ucb/more ca.help");
+	    rv = (double) system("more TEK/ca.help");
 	    break;
 
 

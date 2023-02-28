@@ -2,6 +2,10 @@
 
 #define INT_EXT extern 		/* all variables in ca.h are now*\
 				 * extern to this file		*/
+
+#include <stdlib.h>
+#include <string.h>
+
 #include "ca.h"
 
 /************************************************************************
@@ -40,7 +44,7 @@ char *filename, *mode;
  * parse_error() prints message to stdout and sets global indication.	*
  *									*
  ************************************************************************/
-parse_error(s)
+void parse_error(s)
 char *s;
 {
     printf("unable to parse input=> %s\n", s);
@@ -73,7 +77,7 @@ char *var_name;				/* name of variable to look for	*/
     }
 	/* entire list traversed and variable name was not found create	*
 	 * new entry in linked list					*/
-    if (get_space(&var_ptr, 1, sizeof(struct variable))) {
+    if (get_space((char**)&var_ptr, 1, sizeof(struct variable))) {
       return(NULL);
     }
     last_ptr->next = var_ptr;			/* extend linked list	*/
@@ -98,11 +102,11 @@ char *str;				/* string to make space for	*/
     length = strlen(str) + 1;	/* length of array to hold string	*/
 			/* allocate space for structure and for string	*/
     if (get_space(&rv, length, sizeof(char))) {
-      return(NULL);
+      return(0);
     }
 
     strcpy(rv, str);				/* copy string to space	*/
-    return((double) (int) rv);		/* return pointer to space	*/
+    return((double) (long long) rv);		/* return pointer to space	*/
 } /* end get_string() */
 
 
@@ -112,6 +116,7 @@ char *str;				/* string to make space for	*/
  * pointer.  Prints message and	returns 1 if error, returns 0 o/w	*
  *									*
  ************************************************************************/
+int 
 get_space(pointer, space_size, object_size)
 char **pointer;				/* pointer to assign space to	*/
 int space_size, 				/* number of elements	*/
@@ -135,7 +140,7 @@ int space_size, 				/* number of elements	*/
  ************************************************************************/
 double my_random()
 {
-    return(((double) (random() % 1000000))/1000000.0);
+    return(((double) (rand() % 1000000))/1000000.0);
 }
 
 
@@ -144,7 +149,7 @@ double my_random()
  * string_error() prints error message					*
  *									*
  ************************************************************************/
-string_error(s)
+void string_error(s)
 char *s;
 {
     printf(

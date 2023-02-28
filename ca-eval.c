@@ -2,6 +2,8 @@
 /* file: ca-eval.c							*/
 #define INT_EXT extern
 
+#include <stdlib.h>
+
 #include "ca.h"
 
 
@@ -119,7 +121,7 @@ struct CA *ca_ptr;
     double rv;
 
     for (i=0; i<world_size; i++) {/* do for each position in world	*/
-	ca_ptr->world[i] = random() % ca_ptr->states;
+	ca_ptr->world[i] = rand() % ca_ptr->states;
 	world[i] = ca_ptr->world[i] + '0';	/* add to string	*/
     }
     world[i] = '\0';				/* terminate string	*/
@@ -132,5 +134,5 @@ struct CA *ca_ptr;
 } /* end random_world() */
 
 
-run_evolve()
+void run_evolve()
 { }

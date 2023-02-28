@@ -15,6 +15,7 @@
 void box(x1, y1, x2, y2, fflag)
 	int x1, y1, x2, y2, fflag;
 {
+#if 0  // removed because plot is no longer a curses library (see Makefile)
 	move(x1, y1);
 	cont(x2, y1);
 	cont(x2, y2);
@@ -31,10 +32,12 @@ void box(x1, y1, x2, y2, fflag)
 		line(x1, y1, x2, y2);
 		line(x1, y2, x2, y1);
 	}
+#endif
 }
 
-disp_plot()
+int disp_plot()
 {
+#if 0  // removed because plot is no longer a curses library (see Makefile)
 	int i, j, min_x, max_x, min_y, max_y, xoff, scale;
 
 	/* Open and define plotting space and clear screen */
@@ -76,7 +79,7 @@ disp_plot()
 	closepl();
 
 	int_hit = 0;
-
+#endif
 	return(0);
 }
 

@@ -2,6 +2,7 @@
 #define INT_EXT extern
 #include "ca.h"
 
+#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "ca_cursor.h"
@@ -14,7 +15,7 @@ XRectangle *state_pix;
 #define ca_cell_height 2
 
 
-disp_window()
+int disp_window()
 {
     Display *disp;
     Window ca_window;
@@ -36,7 +37,7 @@ disp_window()
     char text[10];
 
 
-    if (get_space(&state_pix, world_size, sizeof(XRectangle))) {
+    if (get_space((char**)&state_pix, world_size, sizeof(XRectangle))) {
 	return(1);
     }
 
@@ -133,18 +134,22 @@ disp_window()
 
 	    break;
 	  
-	  case MappingNotify:
-	    XRefreshKeyboardMapping (&event);
+	  case MappingNotify: {
+		XMappingEvent mappingEvent;
+	    XRefreshKeyboardMapping (&mappingEvent);
 	    break;
+	  }
 
 	  case ButtonPress:
 	    done = 1;
 	    break;
 
-	  case KeyPress:
-	    i = XLookupString (&event, text, 10, &key, 0);
+	  case KeyPress: {
+		XKeyEvent keyEvent;
+	    i = XLookupString (&keyEvent, text, 10, &key, 0);
 	    if (i == 1 && text[0] == 'q') done = 1;
 	    break;
+	  }
 	} /*switch*/
     } /*while*/
 

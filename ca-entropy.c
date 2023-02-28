@@ -1,6 +1,7 @@
 /* file: ca-entropy.c							*/
 
 #define INT_EXT extern
+#include <stdlib.h>
 #include "ca.h"
 
 
@@ -59,7 +60,7 @@ int size, block_size, temporal;
     state_combos = (int) pow((double) root.states, (double) block_size);
 
 				/* generate space for the prob dist	*/
-    if (get_space(&state_dist, state_combos, sizeof(double))) {
+    if (get_space((char**)&state_dist, state_combos, sizeof(double))) {
 	space_err = 1;
 	return(-1);
     }
@@ -126,9 +127,9 @@ char *limit;
     j_pos = separation % world_size;
     
 				/* generate space to hold 3 prob dists	*/
-    if (get_space(&i_prob_dist, ts, sizeof(double)) ||
-        get_space(&j_prob_dist, ts, sizeof(double)) ||
-        get_space(&ij_prob_dist, ts*ts, sizeof(double))) {
+    if (get_space((char**)&i_prob_dist, ts, sizeof(double)) ||
+        get_space((char**)&j_prob_dist, ts, sizeof(double)) ||
+        get_space((char**)&ij_prob_dist, ts*ts, sizeof(double))) {
     	free(i_prob_dist);				/* oops		*/
     	free(j_prob_dist);
     	free(ij_prob_dist);

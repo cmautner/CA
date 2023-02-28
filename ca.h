@@ -42,6 +42,10 @@ double set_option();
 double get_options();
 double space_entropy();
 double mut_inf_space_time();
+int get_space(char **pointer, int space_size, int object_size);
+void parse_error(char *s);
+void string_error(char *s);
+
 
 #define MAX_FILES 32
 INT_EXT struct file_struct {

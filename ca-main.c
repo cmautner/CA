@@ -2,15 +2,19 @@
 
 #define INT_EXT /* used in ca.h, defined as extern in all other files */
 
+#include <stdlib.h>	
+#include <stdio.h>	
+
 #include "ca.h"
 
+int defaults();
 
 /************************************************************************
  *									*
  *									*
  ************************************************************************/
 
-main(argc, argv) 
+int main(argc, argv) 
 int	argc;			/* number of items on command line	*/
 char	*argv[];		/* array of pointers to command	line 
 				 * items				*/
@@ -45,19 +49,19 @@ char	*argv[];		/* array of pointers to command	line
 	int_hit = 0;
 	printf("Option(h=help): ");
 
-	if (gets(s) == NULL) break;
+	if (fgets(s, sizeof(s), stdin) == NULL) break;
 	next = s;
 	while (*next) {
 	    if (int_hit) break;
 	    rv = set_option(next,&next);
 	    if (return_type == STRING)
-		free((char *) (int) rv);
+		free((char *) (long long) rv);
 	}
     }   			/* end while(1) to get key input*/
 }
 
 
-defaults()
+int defaults()
 {
     int_hit = 0;
     log_file = NULL;
@@ -69,7 +73,7 @@ defaults()
     max_time = 200;
     window_count = 0;
 
-    if (get_space(&var_header, 1, sizeof(struct variable)) ||
+    if (get_space((char**)&var_header, 1, sizeof(struct variable)) ||
 	get_space(&ca_states, world_size*MAX_TIME, sizeof(char)) ||
 	get_space(&root.world, world_size, sizeof(char))) {
       return(-1);

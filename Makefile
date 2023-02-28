@@ -2,11 +2,12 @@ PROFILE = -pg
 PROFILE =
 DEBUG = -g $(PROFILE)
 DEBUG =
-XLIB = 
+XLIB =
 XLIB = -lX11
-XFILE = 
+XFILE =
 XFILE = ca-X.o
 PLOTLIB = -l4014
+PLOTLIB =
 
 ca:	ca-main.o ca-entropy.o ca-eval.o ca-parse.o ca-plot.o \
 							ca-utilities.o $(XFILE)
